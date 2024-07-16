@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぶるぺん動物園</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%3E%3Cpath%20d%3D%22M0%200h5v5H0zM5%205h5v5H5z%22%20fill%3D%22%23f0f0f0%22%20fill-opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E');
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(to right, #ff69b4, #ffff00, #00ff00);
+        }
+        h1 {
+            font-size: 48px;
+            color: #800080;
+            animation: bounce 1s infinite;
+        }
+        .marquee {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee span {
+            display: inline-block;
+            font-size: 24px;
+            color: #ff0000;
+            animation: marquee 20s linear infinite;
+        }
+        nav {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            background-color: #0000ff;
+            color: white;
+            border: none;
+        }
+        .tab-button.active {
+            background-color: #ff0000;
+            animation: pulse 2s infinite;
+        }
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .tab-content {
+            display: none;
+            background-color: white;
+            border: 4px solid #ffff00;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .tab-content h2 {
+            font-size: 24px;
+            color: #800080;
+        }
+        .tab-content p {
+            color: #0000ff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+        }
+        footer p {
+            font-size: 18px;
+            font-weight: bold;
+            color: #008000;
+            animation: spin 5s linear infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ぶるぺん動物園</h1>
+        <div class="marquee">
+            <span>ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！</span>
+        </div>
+    </header>
+
+    <nav>
+        <button class="tab-button active" data-tab="home">HOME</button>
+        <button class="tab-button" data-tab="staff">STAFF</button>
+        <button class="tab-button" data-tab="qa">Q&A</button>
+        <button class="tab-button" data-tab="access">ACCESS</button>
+    </nav>
+
+    <main>
+        <div id="home" class="tab-content" style="display:block;">
+            <h2>ぶるぺん園長の有り難いお言葉</h2>
+            <p>みんな～！ぶるぺん動物園へようこそだぞ！ここは動物たちのパラダイスだ！思いっきり楽しんでいってね！</p>
+        </div>
+        <div id="staff" class="tab-content">
+            <h2>スタッフ大集合！</h2>
+            <p>獣医のタロー先生、飼育員のハナコさん、ガイドのピーコくん、みんなが待ってるよ！</p>
+        </div>
+        <div id="qa" class="tab-content">
+            <h2>賢者くんの超スゴイ回答集</h2>
+            <p>Q: ゾウの鼻は何本？ A: なんと1本！でも、指みたいに使えるんだって！すごいでしょ！</p>
+        </div>
+        <div id="access" class="tab-content">
+            <h2>ここだよ、ぶるぺん動物園！</h2>
+            <p>住所：動物町ワイワイ通り123番地 電車：ズーズー駅から徒歩3分 車：ケモノ街道を走ってすぐだよ！</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>☆★☆ 1990年代風 ぶるぺん動物園 ☆★☆</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var tabs = document.querySelectorAll('.tab-button');
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    var tabId = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(function(content) {
+                        content.style.display = 'none';
+                    });
+                    document.getElementById(tabId).style.display = 'block';
+                    tabs.forEach(function(t) {
+                        t.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+
+            var marqueeText = "ようこそ！ぶるぺん動物園へ！";
+            setInterval(function() {
+                marqueeText = marqueeText.slice(1) + marqueeText[0];
+                document.querySelector('.marquee span').textContent = marqueeText.repeat(3);
+            }, 200);
+        });
+    </script>
+</body>
+</html>
