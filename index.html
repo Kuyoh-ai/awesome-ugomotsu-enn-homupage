@@ -5,62 +5,210 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ぶるぺん動物園</title>
     <style>
+        /* ==========================================================
+           タイムライン（ページロード）
+           0.00s 開幕ワイプ：ピンク→黄色の二枚重ねが右へ抜ける
+           0.90s タイトル1文字ずつポップ（0.07s刻み）
+           1.20s タブボタンが順にポップ
+           1.30s HOMEパネルのワイプ演出
+           2.00s〜 タイトルのウェーブ・動物たちのぴょこぴょこループ
+           ========================================================== */
+        :root {
+            /* 署名イージング（ワイプ・遷移） */
+            --ease-wipe: cubic-bezier(0.87, 0.05, 0.02, 0.97);
+            /* 勢いよく飛び出して減速（登場） */
+            --ease-pop: cubic-bezier(0, 0.31, 0.18, 0.99);
+            /* わずかにオーバーシュート（ホバー） */
+            --ease-spring: cubic-bezier(0, 0.56, 0.15, 1.01);
+        }
         body {
             font-family: 'Comic Sans MS', cursive;
             background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%3E%3Cpath%20d%3D%22M0%200h5v5H0zM5%205h5v5H5z%22%20fill%3D%22%23f0f0f0%22%20fill-opacity%3D%22.5%22%2F%3E%3C%2Fsvg%3E');
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
+
+        /* ---------- 開幕ワイプ（二枚重ね追いかけ） ---------- */
+        .opening {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .opening__layer {
+            position: absolute;
+            inset: 0;
+            animation: wipe-out 0.9s var(--ease-wipe) var(--delay, 0s) forwards;
+        }
+        /* 薄い色：後から出る */
+        .opening__layer--light { --delay: 0.45s; background-color: #ffff00; }
+        /* 濃い色：先に出る */
+        .opening__layer--dark  { --delay: 0.3s;  background-color: #ff69b4; }
+        .opening__logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 72px;
+            transform: translate(-50%, -50%);
+            animation: logo-out 0.4s var(--ease-wipe) 0.15s forwards;
+        }
+        .opening__logo span {
+            display: inline-block;
+            animation: hop 0.5s ease-in-out infinite;
+        }
+
+        /* ---------- ヘッダー ---------- */
         header {
             text-align: center;
             padding: 20px 0;
             background: linear-gradient(to right, #ff69b4, #ffff00, #00ff00);
+            overflow: hidden;
         }
         h1 {
             font-size: 48px;
             color: #800080;
-            animation: bounce 1s infinite;
+            margin: 10px 0;
         }
+        /* 親=登場ポップ、子=ループのウェーブ（transformの衝突を構造で回避） */
+        .title__char {
+            display: inline-block;
+            --delay: calc(0.9s + var(--i) * 0.07s);
+            animation: popup 0.7s ease-in-out var(--delay) both;
+        }
+        .title__char > span {
+            display: inline-block;
+            transform-origin: center bottom;
+            animation: title-wave 2.4s ease-in-out calc(2s + var(--i) * 0.1s) infinite;
+        }
+
+        /* 動物たちの行進 */
+        .animals {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .animals__item {
+            display: inline-block;
+            --delay: calc(1s + var(--i) * 0.1s);
+            animation: popup 0.7s ease-in-out var(--delay) both;
+        }
+        .animals__item > span {
+            display: inline-block;
+            transform-origin: center bottom;
+            /* 全員同じ duration、delay だけずらす */
+            animation: animal-hop 2.4s ease-in-out calc(2s + var(--i) * 0.15s) infinite;
+        }
+
+        /* マーキー：2本並べて -50% 移動で継ぎ目なしループ */
         .marquee {
             overflow: hidden;
             white-space: nowrap;
         }
-        .marquee span {
-            display: inline-block;
+        .marquee__track {
+            display: inline-flex;
+            animation: marquee 16s linear infinite;
+        }
+        .marquee__track span {
             font-size: 24px;
             color: #ff0000;
-            animation: marquee 20s linear infinite;
+            padding-right: 1em;
         }
+
+        /* ---------- ナビ ---------- */
         nav {
             text-align: center;
             margin: 20px 0;
         }
         .tab-button {
             padding: 10px 20px;
-            margin: 0 5px;
+            margin: 5px;
+            font-family: inherit;
             font-weight: bold;
             border-radius: 20px;
             cursor: pointer;
             background-color: #0000ff;
             color: white;
             border: none;
+            --delay: calc(1.2s + var(--i) * 0.08s);
+            /* 登場後は transform を解放してホバーを効かせる（backwards のみ） */
+            animation: popup-small 0.6s var(--ease-pop) var(--delay) backwards;
+            transition: transform 0.4s var(--ease-spring), background-color 0.2s;
+        }
+        .tab-button:hover {
+            transform: scale(1.12) rotate(-4deg);
+        }
+        .tab-button:active {
+            transform: scale(0.92);
+            transition-duration: 0.1s;
+        }
+        .tab-button__label {
+            display: inline-block;
         }
         .tab-button.active {
             background-color: #ff0000;
-            animation: pulse 2s infinite;
         }
+        /* 選択時：ポン！と弾んで、その後は「ため」のあるぷるぷるループ */
+        .tab-button.active .tab-button__label {
+            animation:
+                popup-small 0.5s ease-in-out 0s both,
+                wiggle 2s ease-in-out 0.5s infinite;
+        }
+
+        /* ---------- メイン（タブパネル） ---------- */
         main {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            /* 初回のみオープニングに合わせて遅らせる（クリック後はJSで0sに） */
+            --enter-delay: 1.3s;
         }
         .tab-content {
             display: none;
+            position: relative;
+            overflow: hidden;
             background-color: white;
             border: 4px solid #ffff00;
             border-radius: 10px;
             padding: 20px;
         }
+        .tab-content.is-active {
+            display: block;
+        }
+        /* パネル内の二枚重ねワイプ：左から入り右へ抜ける（通過感） */
+        .tab-content::before,
+        .tab-content::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            transform: translateX(-101%);
+        }
+        .tab-content.is-active::before,
+        .tab-content.is-active::after {
+            animation:
+                slide-in  0.5s var(--ease-wipe) both,
+                slide-out 0.5s var(--ease-wipe) forwards;
+        }
+        /* 薄い色：先に入り、後から出る */
+        .tab-content.is-active::before {
+            background-color: #ffff00;
+            animation-delay: var(--enter-delay), calc(var(--enter-delay) + 0.65s);
+        }
+        /* 濃い色：遅れて入り、先に出る */
+        .tab-content.is-active::after {
+            background-color: #ff69b4;
+            animation-delay: calc(var(--enter-delay) + 0.08s), calc(var(--enter-delay) + 0.55s);
+        }
+        .tab-content.is-active h2,
+        .tab-content.is-active p {
+            animation: text-in 0.55s var(--ease-pop) calc(var(--enter-delay) + var(--delay, 0s)) both;
+        }
+        .tab-content.is-active h2 { --delay: 0.6s; }
+        .tab-content.is-active p  { --delay: 0.7s; }
         .tab-content h2 {
             font-size: 24px;
             color: #800080;
@@ -68,51 +216,143 @@
         .tab-content p {
             color: #0000ff;
         }
+
+        /* ---------- フッター ---------- */
         footer {
             text-align: center;
-            margin-top: 40px;
+            margin: 40px 0 30px;
         }
         footer p {
+            display: inline-block;
             font-size: 18px;
             font-weight: bold;
             color: #008000;
-            animation: spin 5s linear infinite;
+            transform-origin: center -40px; /* 上に支点を作って振り子 */
+            animation: swing 3s ease-in-out infinite;
         }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+        .star {
+            display: inline-block;
+            color: #ffcc00;
+            animation: twinkle 1.5s ease-in-out calc(var(--i) * 0.2s) infinite;
+        }
+
+        /* ---------- keyframes ---------- */
+        @keyframes wipe-out {
+            from { transform: translateX(0); }
+            to   { transform: translateX(101%); }
+        }
+        @keyframes logo-out {
+            from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            to   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+        }
+        @keyframes slide-in {
+            from { transform: translateX(-101%); }
+            to   { transform: translateX(0); }
+        }
+        @keyframes slide-out {
+            from { transform: translateX(0); }
+            to   { transform: translateX(101%); }
+        }
+        /* 多段オーバーシュートで弾ませる */
+        @keyframes popup {
+            0%   { transform: scale(0); }
+            40%  { transform: scale(1.4); }
+            60%  { transform: scale(0.95); }
+            80%  { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+        @keyframes popup-small {
+            0%   { transform: scale(0.6); }
+            40%  { transform: scale(1.18); }
+            70%  { transform: scale(0.96); }
+            100% { transform: scale(1); }
+        }
+        @keyframes text-in {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        /* ため → つぶれ → ジャンプ → 着地つぶれ → ため */
+        @keyframes title-wave {
+            0%, 50%  { transform: translateY(0) scale(1, 1); }
+            58%      { transform: translateY(0) scale(1.15, 0.85); }
+            70%      { transform: translateY(-18px) scale(0.92, 1.1); }
+            82%      { transform: translateY(0) scale(1.1, 0.9); }
+            90%, 100% { transform: translateY(0) scale(1, 1); }
+        }
+        @keyframes animal-hop {
+            0%, 40%  { transform: translateY(0) rotate(0); }
+            48%      { transform: translateY(0) scale(1.2, 0.8); }
+            60%      { transform: translateY(-14px) rotate(-10deg); }
+            72%      { transform: translateY(0) rotate(8deg) scale(1.1, 0.9); }
+            80%, 100% { transform: translateY(0) rotate(0); }
+        }
+        @keyframes hop {
+            0%, 100% { transform: translateY(0) scale(1.1, 0.9); }
+            50%      { transform: translateY(-20px) scale(0.95, 1.05); }
         }
         @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @keyframes wiggle {
+            0%, 60%, 100% { transform: rotate(0); }
+            68% { transform: rotate(-8deg) scale(1.08); }
+            76% { transform: rotate(6deg)  scale(1.08); }
+            84% { transform: rotate(-4deg); }
+            92% { transform: rotate(2deg); }
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes swing {
+            0%, 100% { transform: rotate(-4deg); }
+            50%      { transform: rotate(4deg); }
+        }
+        @keyframes twinkle {
+            0%, 100% { transform: scale(1) rotate(0); opacity: 1; }
+            50%      { transform: scale(0.5) rotate(180deg); opacity: 0.4; }
+        }
+
+        /* ---------- アクセシビリティ ---------- */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+            .opening { display: none; }
         }
     </style>
 </head>
 <body>
+    <div class="opening" aria-hidden="true">
+        <div class="opening__layer opening__layer--light"></div>
+        <div class="opening__layer opening__layer--dark"></div>
+        <div class="opening__logo"><span>🐧</span></div>
+    </div>
+
     <header>
-        <h1>ぶるぺん動物園</h1>
+        <h1 aria-label="ぶるぺん動物園"><span class="title__char" style="--i:0" aria-hidden="true"><span>ぶ</span></span><span class="title__char" style="--i:1" aria-hidden="true"><span>る</span></span><span class="title__char" style="--i:2" aria-hidden="true"><span>ぺ</span></span><span class="title__char" style="--i:3" aria-hidden="true"><span>ん</span></span><span class="title__char" style="--i:4" aria-hidden="true"><span>動</span></span><span class="title__char" style="--i:5" aria-hidden="true"><span>物</span></span><span class="title__char" style="--i:6" aria-hidden="true"><span>園</span></span></h1>
+        <div class="animals" aria-hidden="true">
+            <span class="animals__item" style="--i:0"><span>🐘</span></span>
+            <span class="animals__item" style="--i:1"><span>🦒</span></span>
+            <span class="animals__item" style="--i:2"><span>🐧</span></span>
+            <span class="animals__item" style="--i:3"><span>🐼</span></span>
+            <span class="animals__item" style="--i:4"><span>🦁</span></span>
+        </div>
         <div class="marquee">
-            <span>ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！</span>
+            <div class="marquee__track">
+                <span>ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！</span>
+                <span aria-hidden="true">ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！ようこそ！ぶるぺん動物園へ！</span>
+            </div>
         </div>
     </header>
 
     <nav>
-        <button class="tab-button active" data-tab="home">HOME</button>
-        <button class="tab-button" data-tab="staff">STAFF</button>
-        <button class="tab-button" data-tab="qa">Q&A</button>
-        <button class="tab-button" data-tab="access">ACCESS</button>
+        <button class="tab-button active" data-tab="home" style="--i:0"><span class="tab-button__label">HOME</span></button>
+        <button class="tab-button" data-tab="staff" style="--i:1"><span class="tab-button__label">STAFF</span></button>
+        <button class="tab-button" data-tab="qa" style="--i:2"><span class="tab-button__label">Q&amp;A</span></button>
+        <button class="tab-button" data-tab="access" style="--i:3"><span class="tab-button__label">ACCESS</span></button>
     </nav>
 
     <main>
-        <div id="home" class="tab-content" style="display:block;">
+        <div id="home" class="tab-content is-active">
             <h2>ぶるぺん園長の有り難いお言葉</h2>
             <p>みんな～！ぶるぺん動物園へようこそだぞ！ここは動物たちのパラダイスだ！思いっきり楽しんでいってね！</p>
         </div>
@@ -131,31 +371,30 @@
     </main>
 
     <footer>
-        <p>☆★☆ 1990年代風 ぶるぺん動物園 ☆★☆</p>
+        <p><span class="star" style="--i:0">☆</span><span class="star" style="--i:1">★</span><span class="star" style="--i:2">☆</span> 1990年代風 ぶるぺん動物園 <span class="star" style="--i:3">☆</span><span class="star" style="--i:4">★</span><span class="star" style="--i:5">☆</span></p>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var tabs = document.querySelectorAll('.tab-button');
+            var main = document.querySelector('main');
             tabs.forEach(function(tab) {
                 tab.addEventListener('click', function() {
+                    if (this.classList.contains('active')) return;
                     var tabId = this.getAttribute('data-tab');
+                    // 2回目以降はオープニング待ちなしで即ワイプ
+                    main.style.setProperty('--enter-delay', '0s');
+                    // display:none → block の切り替えでアニメーションが再生し直される
                     document.querySelectorAll('.tab-content').forEach(function(content) {
-                        content.style.display = 'none';
+                        content.classList.remove('is-active');
                     });
-                    document.getElementById(tabId).style.display = 'block';
+                    document.getElementById(tabId).classList.add('is-active');
                     tabs.forEach(function(t) {
                         t.classList.remove('active');
                     });
                     this.classList.add('active');
                 });
             });
-
-            var marqueeText = "ようこそ！ぶるぺん動物園へ！";
-            setInterval(function() {
-                marqueeText = marqueeText.slice(1) + marqueeText[0];
-                document.querySelector('.marquee span').textContent = marqueeText.repeat(3);
-            }, 200);
         });
     </script>
 </body>
